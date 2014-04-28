@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <title>BeagleBone Black Demo</title>
+ 
+    <!-- jQuery and jQuery Mobile -->
+    <link rel="stylesheet" href="http://code.jquery.com/mobile/1.3.1/jquery.mobile-1.3.1.min.css" />
+    <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+    <script src="http://code.jquery.com/mobile/1.3.1/jquery.mobile-1.3.1.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+
+    <!-- Code for socket.io and device orientation handling -->
+    <script>
+    var socket = io.connect();
+    // Send data through socket
+    function rightWheel(value){
+      socket.emit('rightWheel', value);
+    }
+    function leftWheel(value){
+      socket.emit('leftWheel', value);
+    }
+
+    // Take actions based on device orientation (works on mobile devices only)
+    if (window.DeviceOrientationEvent) {
+        // Listen for the deviceorientation event and handle the raw data
+        window.addEventListener('deviceorientation', function(eventData) {
+          // gamma is the left-to-right tilt in degrees, where right is positive
+          var tiltLR = eventData.gamma;
+          // beta is the front-to-back tilt in degrees, where front is positive
+          var tiltFB = eventData.beta;
+          // call orientation event handler
+          if (Gyro.value == 'on'){
+            deviceOrientationHandler(tiltLR, tiltFB);
+          }
+        }, false);
+    }
+    else {
+        console.log("DeviceOrientation is NOT supported");
+        }
+    
+    function deviceOrientationHandler(LeftRight, FrontBack){
+        // normalize and limit values between 0 and 100
+        LeftRight = Math.min(Math.max(Math.round(LeftRight), -100), 100);
+        FrontBack = Math.min(Math.max(Math.round(FrontBack), -100), 100);
+        //LeftRight = Math.round((LeftRight/180)*100);
+        //FrontBack = Math.round((LeftRight/180)*50);
+        
+        if (LeftRight >= 0) {
+            rightWheel(LeftRight);
+            leftWheel(LeftRight);
+        } 
+        if (LeftRight <= 0) {
+            rightWheel(LeftRight);
+            leftWheel(LeftRight);
+        }
+        if (FrontBack <= 0) {
+            // Do nothing...yet
+        }
+        if (FrontBack > 0) {
+            // Do nothing...yet
+        }
+    }
+ 
+    function gyroSwitch(sel){
+        if (sel.value == "on") {
+            $("#Demo").val('off').slider('refresh').slider('disable');
+            $("#slider1").val('0').slider('refresh').slider('disable');
+            $("#slider2").val('0').slider('refresh').slider('disable');
+            $("#slider3").val('0').slider('refresh').slider('disable');
+        } else if (sel.value == "off") {
+            $('#Demo').slider('enable');
+            $("#slider1").slider('enable');
+            $("#slider2").slider('enable');
+            $("#slider3").slider('enable');
+        }
+    }
+    </script>
+</head>
+<body>
+<!-- Home -->
+<div data-role="page" id="page1">
+    <div data-theme="a" data-role="header">
+        <h3>
+            BeagleBone Black
+        </h3>
+    </div>
+    <div data-role="content">
+        <div data-role="fieldcontain">
+            <label for="slider1">
+                Right Wheel
+            </label>
+            <input id="slider1" type="range" name="slider" value="0" min="-100" max="100"
+            data-highlight="false" data-theme="b" onChange="rightWheel(value);">
+        </div>
+        <div data-role="fieldcontain">
+            <label for="slider2">
+                Left Wheel
+            </label>
+            <input id="slider2" type="range" name="slider" value="0" min="-100" max="100"
+            data-highlight="false" data-theme="b" onChange="leftWheel(value);">
+        </div>
+        <div data-role="fieldcontain">
+            <label for="Gyro">
+                Gyroscope
+            </label>
+            <select name="toggleswitch2" id="Gyro" data-theme="b" data-role="slider" onchange="gyroSwitch(this);">
+                <option value="off">Off</option>
+                <option value="on">On</option>
+            </select>
+        </div>
+    </div>
+</div>
+</body>
+</html>
